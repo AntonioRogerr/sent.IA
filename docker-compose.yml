@@ -12,7 +12,6 @@ services:
     networks:
       - app-network
 
-
   sentia:
     build:
       context: .
@@ -21,6 +20,20 @@ services:
       - .:/app
     ports:
       - "8000:8000"
+    
+    environment:
+      # Fuso horário para o container
+      TZ: America/Belem
+
+      # Variáveis para conexão com o banco de dados
+      DB_HOST: postgres
+      DB_NAME: sentia
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_PORT: 5432
+      # Chave da API do Google Gemini
+      GOOGLE_API_KEY: AIzaSyDdg3KV5IvwyvcOvWEFAPHEwcJsegiW2rQ
+
     networks:
       - app-network
     depends_on:
