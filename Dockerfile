@@ -16,6 +16,11 @@ RUN pip install -r requirements.txt
 # Copia todo o projeto
 COPY . .
 
+# --- ALTERE A LINHA ABAIXO ---
+ENV TZ=America/Sao_Paulo
+# -----------------------------
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
 # Copia o script de entrypoint e dá permissão de execução
 COPY entrypoint.sh /app/entrypoint.sh
 RUN chmod +x /app/entrypoint.sh

@@ -23,7 +23,7 @@ services:
     
     environment:
       # Fuso horário para o container
-      TZ: America/Belem
+      TZ: America/Sao_Paulo
 
       # Variáveis para conexão com o banco de dados
       DB_HOST: postgres
