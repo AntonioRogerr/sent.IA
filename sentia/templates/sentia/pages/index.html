@@ -8,7 +8,7 @@
         <div class="card p-4 p-md-5">
             <div class="card-body">
                 <h1 class="card-title text-center mb-4">Ferramenta de Análise de Sentimento</h1>
-                <p class="text-center text-muted mb-4">Analise feedbacks colando o texto ou enviando um arquivo CSV.</p>
+                <p class="text-center text-muted mb-4">Analise feedbacks enviando um arquivo CSV.</p>
                 
                 {% if message %}
                     <div class="alert alert-success text-center" role="alert">
@@ -27,7 +27,7 @@
                     <p class="text-muted text-center small">Seu CSV deve conter uma coluna para o texto do feedback (ex: 'feedback_text' ou 'Feedback') e pode ter colunas opcionais como 'customer_name', 'feedback_date', 'product_area'.</p>
                     <div class="mb-3">
                         <label for="csvFile" class="form-label">Selecione um arquivo CSV:</label>
-                        <input class="form-control" type="file" id="csvFile" name="csv_file" accept=".csv">
+                        <input class="form-control" type="file" id="csvFile" name="csv_file" accept=".csv" required>
                     </div>
                     <div class="d-grid">
                         <button type="submit" class="btn btn-success btn-lg">
@@ -36,21 +36,6 @@
                     </div>
                 </form>
 
-                <hr class="my-5">
-
-                <form method="POST" action="{% url 'index' %}" class="p-4 border rounded bg-light">
-                    {% csrf_token %}
-                    <h3 class="mb-3 text-center">Analisar Texto Direto</h3>
-                    <p class="text-center text-muted small">Cole um ou vários feedbacks no campo abaixo (um por linha).</p>
-                    <div class="mb-3">
-                        <textarea class="form-control" name="feedbacks_text" rows="10" placeholder="Ex: O atendimento foi excelente!&#10;Ex: O produto demorou muito para chegar.&#10;Ex: A embalagem veio conforme o esperado."></textarea>
-                    </div>
-                    <div class="d-grid">
-                        <button type="submit" class="btn btn-primary btn-lg">
-                            <i class="fa-solid fa-magnifying-glass-chart me-2"></i> Analisar Sentimentos
-                        </button>
-                    </div>
-                </form>
             </div>
         </div>
 

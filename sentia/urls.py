@@ -1,11 +1,9 @@
-from django.contrib import admin
-from django.urls import path, include
+from django.urls import path
 from . import views
-
-
 
 urlpatterns = [
     path('', views.index_view, name='index'),
-    path('dashboard/', views.dashboard_view, name='dashboard')
-#    path('blog/', views.blog) na primeira parte colocamos o nome da rota que aparece no site, na segunda puxamos a view 
+    path('dashboard/', views.dashboard_view, name='dashboard'),
+    # --- NOVA LINHA ADICIONADA AQUI ---
+    path('delete_session/<int:session_id>/', views.delete_session_view, name='delete_session'),
 ]

@@ -1,23 +1,51 @@
+# Arquivo: sentia/models.py
+
 from django.db import models
 from django.utils import timezone
+from django.db.models import Count, Q
 
-# Modelo para agrupar uma sessão de análise de feedbacks
+# --- Manager Personalizado ---
+class AnalysisSessionManager(models.Manager):
+    def with_feedback_counts(self):
+        """
+        Retorna o QuerySet de AnalysisSession com contagens de feedback
+        anotadas. Isso é extremamente eficiente para listas.
+        """
+        return self.get_queryset().annotate(
+            total_feedbacks=Count('feedbacks'),
+            positive_feedbacks=Count(
+                'feedbacks',
+                filter=Q(feedbacks__sentiment=Feedback.SentimentChoices.POSITIVE)
+            ),
+            negative_feedbacks=Count(
+                'feedbacks',
+                filter=Q(feedbacks__sentiment=Feedback.SentimentChoices.NEGATIVE)
+            ),
+            neutral_feedbacks=Count(
+                'feedbacks',
+                filter=Q(feedbacks__sentiment=Feedback.SentimentChoices.NEUTRAL)
+            )
+        )
+
+# --- Modelo Principal ---
 class AnalysisSession(models.Model):
     """
-    Representa um único evento de análise, que pode conter vários feedbacks.
-    Ex: Um usuário colou 10 feedbacks e clicou em "Analisar" ou enviou um CSV.
+    Representa um único evento de análise, agora com métodos otimizados
+    para buscar estatísticas de feedback.
     """
     created_at = models.DateTimeField(
         default=timezone.now,
         verbose_name="Data da Análise"
     )
-    # Adicionamos um campo para o nome do arquivo CSV
     csv_filename = models.CharField(
-        max_length=255, 
-        blank=True, 
-        null=True, 
+        max_length=255,
+        blank=True,
+        null=True,
         verbose_name="Nome do Arquivo CSV"
     )
+
+    # --- LIGAÇÃO COM O MANAGER PERSONALIZADO ---
+    objects = AnalysisSessionManager()
 
     def __str__(self):
         local_time = timezone.localtime(self.created_at)
@@ -41,7 +69,6 @@ class Feedback(models.Model):
         POSITIVE = 'POS', 'Positivo'
         NEGATIVE = 'NEG', 'Negativo'
         NEUTRAL = 'NEU', 'Neutro'
-        # Adicione um status 'UNKN' para "desconhecido" caso não consiga analisar
         UNKNOWN = 'UNKN', 'Desconhecido' 
 
     session = models.ForeignKey(
@@ -53,13 +80,12 @@ class Feedback(models.Model):
 
     text = models.TextField(verbose_name="Texto do Feedback")
     sentiment = models.CharField(
-        max_length=4, # Aumentado para 4 para UNKN
+        max_length=4,
         choices=SentimentChoices.choices,
-        default=SentimentChoices.UNKNOWN, # Default para desconhecido
+        default=SentimentChoices.UNKNOWN,
         verbose_name="Sentimento"
     )
     
-    # Novos campos para metadados do CSV
     customer_name = models.CharField(
         max_length=100, 
         blank=True, 
@@ -71,7 +97,6 @@ class Feedback(models.Model):
         null=True, 
         verbose_name="Data do Feedback"
     )
-    # Exemplo de outro campo, ajuste conforme seu CSV
     product_area = models.CharField(
         max_length=100, 
         blank=True, 
@@ -79,14 +104,13 @@ class Feedback(models.Model):
         verbose_name="Área do Produto"
     )
 
-    created_at = models.DateTimeField(auto_now_add=True) # Data de registro no sistema
+    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        # Limita o texto para evitar strings muito longas
         display_text = self.text if len(self.text) <= 50 else self.text[:47] + '...'
         return f"'{display_text}' - {self.get_sentiment_display()} (Sessão: {self.session.id})"
 
     class Meta:
         verbose_name = "Feedback"
         verbose_name_plural = "Feedbacks"
-        ordering = ['-created_at'] # Ordem de criação do feedback no sistema
+        ordering = ['-created_at']

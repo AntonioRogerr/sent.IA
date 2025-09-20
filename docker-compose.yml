@@ -12,6 +12,15 @@ services:
     networks:
       - app-network
 
+  ollama:
+    image: ollama/ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    networks:
+      - app-network
+
   sentia:
     build:
       context: .
@@ -31,13 +40,12 @@ services:
       DB_USER: postgres
       DB_PASSWORD: postgres
       DB_PORT: 5432
-      # Chave da API do Google Gemini
-      GOOGLE_API_KEY: AIzaSyDdg3KV5IvwyvcOvWEFAPHEwcJsegiW2rQ
 
     networks:
       - app-network
     depends_on:
       - postgres
+      - ollama
 
 networks:
   app-network:
@@ -45,3 +53,4 @@ networks:
 
 volumes:
   postgres_data:
+  ollama_data:

@@ -1,38 +1,38 @@
 import csv
 import io
 from datetime import datetime
-from django.shortcuts import render
+from django.shortcuts import render, redirect
+from django.contrib import messages
 from .models import AnalysisSession, Feedback
-from .gemini_analyzer import analyze_sentiment_with_gemini
-
-# A função 'analyze_single_feedback' foi removida, pois agora usamos o Gemini.
+from .ollama_analyzer import analyze_sentiment_with_ollama
 
 def index_view(request):
     if request.method == 'POST':
-        # Lidar com upload de arquivo CSV
         if 'csv_file' in request.FILES:
             csv_file = request.FILES['csv_file']
-            
+            if not csv_file:
+                return render(request, 'sentia/pages/index.html', {
+                    'error_message': 'Por favor, selecione um arquivo para enviar.'
+                })
             if not csv_file.name.endswith('.csv'):
                 return render(request, 'sentia/pages/index.html', {
                     'error_message': 'Por favor, envie um arquivo CSV válido.'
                 })
             
             new_session = AnalysisSession.objects.create(csv_filename=csv_file.name)
-            
             decoded_file = csv_file.read().decode('utf-8-sig')
             io_string = io.StringIO(decoded_file)
             reader = csv.DictReader(io_string)
             
             feedbacks_to_create = []
             results_to_display = []
-
             for row in reader:
                 feedback_text = row.get('feedback_text', row.get('Feedback', '')).strip()
+                if not feedback_text:
+                    continue
                 customer_name = row.get('customer_name', row.get('Cliente', '')).strip()
                 feedback_date_str = row.get('feedback_date', row.get('Data', '')).strip()
                 product_area = row.get('product_area', row.get('Area Produto', '')).strip()
-
                 parsed_date = None
                 if feedback_date_str:
                     try:
@@ -48,76 +48,31 @@ def index_view(request):
                                     parsed_date = datetime.strptime(feedback_date_str, '%d/%m/%Y')
                                 except ValueError:
                                     pass
-
-                if feedback_text:
-                    # --- MUDANÇA AQUI: Chamando a IA do Gemini ---
-                    sentiment_result = analyze_sentiment_with_gemini(feedback_text)
-                    
-                    feedbacks_to_create.append(
-                        Feedback(
-                            session=new_session,
-                            text=feedback_text,
-                            sentiment=sentiment_result,
-                            customer_name=customer_name if customer_name else None,
-                            feedback_date=parsed_date,
-                            product_area=product_area if product_area else None,
-                        )
+                
+                sentiment_result = analyze_sentiment_with_ollama(feedback_text)
+                feedbacks_to_create.append(
+                    Feedback(
+                        session=new_session, text=feedback_text, sentiment=sentiment_result,
+                        customer_name=customer_name if customer_name else None,
+                        feedback_date=parsed_date, product_area=product_area if product_area else None,
                     )
-                    results_to_display.append({
-                        'text': feedback_text,
-                        'sentiment': Feedback.SentimentChoices(sentiment_result).label,
-                        'customer_name': customer_name,
-                        'feedback_date': parsed_date,
-                        'product_area': product_area,
-                    })
+                )
+                results_to_display.append({
+                    'text': feedback_text, 'sentiment': Feedback.SentimentChoices(sentiment_result).label,
+                    'customer_name': customer_name, 'feedback_date': parsed_date, 'product_area': product_area,
+                })
             
             if feedbacks_to_create:
                 Feedback.objects.bulk_create(feedbacks_to_create)
-
             return render(request, 'sentia/pages/index.html', {
-                'results': results_to_display,
-                'session_id': new_session.id,
+                'results': results_to_display, 'session_id': new_session.id,
                 'message': f"CSV '{csv_file.name}' analisado com sucesso e salvo na sessão #{new_session.id}."
             })
-        
-        # Lidar com análise de texto direto
-        elif 'feedbacks_text' in request.POST:
-            feedbacks_text = request.POST.get('feedbacks_text', '')
-            feedback_list = [line.strip() for line in feedbacks_text.splitlines() if line.strip()]
-            
-            results_to_display = []
-            feedbacks_to_create = []
-
-            if feedback_list:
-                new_session = AnalysisSession.objects.create()
-                for text in feedback_list:
-                    # --- MUDANÇA AQUI: Chamando a IA do Gemini ---
-                    sentiment_result = analyze_sentiment_with_gemini(text)
-                    
-                    feedbacks_to_create.append(
-                        Feedback(
-                            session=new_session,
-                            text=text,
-                            sentiment=sentiment_result
-                        )
-                    )
-                    results_to_display.append({
-                        'text': text,
-                        'sentiment': Feedback.SentimentChoices(sentiment_result).label
-                    })
-                Feedback.objects.bulk_create(feedbacks_to_create)
-
-            return render(request, 'sentia/pages/index.html', {
-                'results': results_to_display, 
-                'session_id': new_session.id if feedback_list else None
-            })
-
     return render(request, 'sentia/pages/index.html')
 
 
 def dashboard_view(request):
     all_feedbacks = Feedback.objects.all()
-
     selected_session_id = request.GET.get('session')
     selected_sentiment = request.GET.get('sentiment')
     selected_product_area = request.GET.get('product_area')
@@ -136,10 +91,7 @@ def dashboard_view(request):
     unknown_count = all_feedbacks.filter(sentiment=Feedback.SentimentChoices.UNKNOWN).count()
 
     stats = {
-        'total': total_feedbacks,
-        'positive': positive_count,
-        'negative': negative_count,
-        'neutral': neutral_count,
+        'total': total_feedbacks, 'positive': positive_count, 'negative': negative_count, 'neutral': neutral_count,
         'unknown': unknown_count,
         'positive_percent': (positive_count / total_feedbacks * 100) if total_feedbacks else 0,
         'negative_percent': (negative_count / total_feedbacks * 100) if total_feedbacks else 0,
@@ -147,7 +99,9 @@ def dashboard_view(request):
         'unknown_percent': (unknown_count / total_feedbacks * 100) if total_feedbacks else 0,
     }
 
-    all_sessions = AnalysisSession.objects.all().order_by('-created_at')
+    # Utiliza o seu manager otimizado para buscar as sessões
+    all_sessions = AnalysisSession.objects.with_feedback_counts().order_by('-created_at')
+    
     all_product_areas = Feedback.objects.filter(product_area__isnull=False).values_list('product_area', flat=True).distinct()
 
     context = {
@@ -160,5 +114,16 @@ def dashboard_view(request):
         'selected_product_area': selected_product_area,
         'sentiment_choices': Feedback.SentimentChoices.choices,
     }
-
     return render(request, 'sentia/pages/dashboard.html', context)
+
+
+def delete_session_view(request, session_id):
+    if request.method == 'POST':
+        try:
+            session_to_delete = AnalysisSession.objects.get(id=session_id)
+            session_to_delete.delete()
+            messages.success(request, f'Sessão #{session_id} foi excluída com sucesso.')
+        except AnalysisSession.DoesNotExist:
+            messages.error(request, f'Sessão #{session_id} não encontrada.')
+    
+    return redirect('dashboard')

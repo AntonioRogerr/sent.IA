@@ -5,6 +5,14 @@
 {% block content %}
 <h1 class="mb-4 text-center">Dashboard de Sentimento</h1>
 
+{% if messages %}
+    {% for message in messages %}
+        <div class="alert alert-success text-center" role="alert">
+            {{ message }}
+        </div>
+    {% endfor %}
+{% endif %}
+
 <div class="card mb-4 p-3">
     <h3 class="h5 mb-3">Filtros</h3>
     <form method="GET" action="{% url 'dashboard' %}" class="row g-3 align-items-end">
@@ -97,6 +105,45 @@
 </div>
 
 <div class="card mt-5">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <h2 class="h4 mb-0">Sessões de Análise</h2>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>Sessão</th>
+                    <th>Arquivo CSV</th>
+                    <th>Data da Análise</th>
+                    <th class="text-end">Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for session in all_sessions %}
+                <tr>
+                    <td><a href="?session={{ session.id }}">#{{ session.id }}</a></td>
+                    <td>{{ session.csv_filename|default:"N/A" }}</td>
+                    <td>{{ session.created_at|date:"d/m/Y H:i" }}</td>
+                    <td class="text-end">
+                        <form action="{% url 'delete_session' session.id %}" method="POST" onsubmit="return confirm('Tem certeza que deseja excluir esta sessão? Todos os feedbacks associados serão perdidos.');">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger btn-sm">
+                                <i class="fa-solid fa-trash-can me-1"></i> Excluir
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4" class="text-center p-4">Nenhuma sessão de análise encontrada.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="card mt-5">
     <div class="card-header bg-white">
         <h2 class="h4 mb-0">Últimos Feedbacks Analisados (filtrados)</h2>
     </div>
@@ -144,9 +191,13 @@
     </div>
 </div>
 
+{{ stats|json_script:"chart-data" }}
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // Pega os dados que o Django inseriu no HTML
+        const statsData = JSON.parse(document.getElementById('chart-data').textContent);
+
         const ctx = document.getElementById('sentimentChart').getContext('2d');
         const sentimentChart = new Chart(ctx, {
             type: 'doughnut',
@@ -154,12 +205,13 @@
                 labels: ['Positivos', 'Negativos', 'Neutros', 'Desconhecidos'],
                 datasets: [{
                     label: 'Feedbacks',
-                    data: [{{ stats.positive }}, {{ stats.negative }}, {{ stats.neutral }}, {{ stats.unknown }}],
+                    // Usa os dados lidos do JSON
+                    data: [statsData.positive, statsData.negative, statsData.neutral, statsData.unknown],
                     backgroundColor: [
-                        'rgba(25, 135, 84, 0.7)',  // Verde (Positivo)
-                        'rgba(220, 53, 69, 0.7)',   // Vermelho (Negativo)
-                        'rgba(108, 117, 125, 0.7)',  // Cinza (Neutro)
-                        'rgba(255, 193, 7, 0.7)'     // Amarelo (Desconhecido)
+                        'rgba(25, 135, 84, 0.7)',
+                        'rgba(220, 53, 69, 0.7)',
+                        'rgba(108, 117, 125, 0.7)',
+                        'rgba(255, 193, 7, 0.7)'
                     ],
                     borderColor: [
                         'rgba(25, 135, 84, 1)',
