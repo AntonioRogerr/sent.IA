@@ -23,8 +23,20 @@ def index_view(request):
                     'error_message': 'Por favor, envie um arquivo CSV válido.'
                 })
 
-            # Decodifica o arquivo e prepara para leitura
-            decoded_file = csv_file.read().decode('utf-8-sig')
+            # --- LÓGICA DE DECODIFICAÇÃO ATUALIZADA ---
+            # Tenta decodificar como UTF-8 (padrão), se falhar, tenta como Latin-1 (comum no Excel)
+            file_content = csv_file.read()
+            try:
+                decoded_file = file_content.decode('utf-8-sig')
+            except UnicodeDecodeError:
+                try:
+                    decoded_file = file_content.decode('latin-1')
+                except UnicodeDecodeError:
+                    return render(request, 'sentia/pages/index.html', {
+                        'error_message': 'Não foi possível decodificar o arquivo. Tente salvá-lo com a codificação UTF-8.'
+                    })
+            # --- FIM DA ALTERAÇÃO ---
+            
             io_string = io.StringIO(decoded_file)
             reader = csv.DictReader(io_string)
 
