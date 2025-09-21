@@ -124,7 +124,7 @@ def dashboard_view(request):
 
     context = {
         'stats': stats,
-        'all_feedbacks': all_feedbacks.order_by('-created_at')[:10],
+        'all_feedbacks': all_feedbacks.order_by('-created_at'),
         'all_sessions': all_sessions,
         'all_product_areas': all_product_areas,
         'selected_session_id': selected_session_id,
