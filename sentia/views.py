@@ -6,6 +6,7 @@ import json
 from datetime import datetime
 from django.shortcuts import render, redirect
 from django.contrib import messages
+from django.http import HttpResponse, JsonResponse # Adicionar JsonResponse
 from .models import AnalysisSession, Feedback
 from .ollama_analyzer import analyze_sentiment_with_ollama
 
@@ -165,3 +166,74 @@ def delete_session_view(request, session_id):
         except AnalysisSession.DoesNotExist:
             messages.error(request, f'Sessão #{session_id} não encontrada.')
     return redirect('dashboard')
+
+
+def export_filtered_data_view(request):
+    """
+    Exporta os feedbacks filtrados para um arquivo CSV.
+    """
+    feedbacks_query = Feedback.objects.select_related('session').all()
+    
+    selected_session_id = request.GET.get('session')
+    selected_sentiment = request.GET.get('sentiment')
+    selected_product_area = request.GET.get('product_area')
+
+    if selected_session_id:
+        feedbacks_query = feedbacks_query.filter(session__id=selected_session_id)
+    if selected_sentiment:
+        feedbacks_query = feedbacks_query.filter(sentiment=selected_sentiment)
+    if selected_product_area:
+        feedbacks_query = feedbacks_query.filter(product_area__icontains=selected_product_area)
+
+    response = HttpResponse(content_type='text/csv; charset=utf-8')
+    response['Content-Disposition'] = 'attachment; filename="feedbacks_export.csv"'
+    response.write('\ufeff')
+
+    writer = csv.writer(response)
+    writer.writerow([
+        'ID do Feedback', 'Texto', 'Sentimento', 'Cliente', 
+        'Data do Feedback', 'Área do Produto', 'Sessão', 'Analisado em'
+    ])
+
+    for feedback in feedbacks_query.order_by('-created_at'):
+        writer.writerow([
+            feedback.id,
+            feedback.text,
+            feedback.get_sentiment_display(),
+            feedback.customer_name or 'N/A',
+            feedback.feedback_date.strftime('%d/%m/%Y') if feedback.feedback_date else 'N/A',
+            feedback.product_area or 'N/A',
+            f"Sessão #{feedback.session.session_number}",
+            feedback.created_at.strftime('%d/%m/%Y %H:%M')
+        ])
+    return response
+
+# --- NOVA VIEW PARA EXPORTAR JSON ---
+def export_filtered_data_json_view(request):
+    """
+    Exporta os feedbacks filtrados para um arquivo JSON.
+    """
+    feedbacks_query = Feedback.objects.select_related('session').all()
+    
+    selected_session_id = request.GET.get('session')
+    selected_sentiment = request.GET.get('sentiment')
+    selected_product_area = request.GET.get('product_area')
+
+    if selected_session_id:
+        feedbacks_query = feedbacks_query.filter(session__id=selected_session_id)
+    if selected_sentiment:
+        feedbacks_query = feedbacks_query.filter(sentiment=selected_sentiment)
+    if selected_product_area:
+        feedbacks_query = feedbacks_query.filter(product_area__icontains=selected_product_area)
+
+    # Converte o queryset em uma lista de dicionários
+    data_to_export = list(feedbacks_query.values(
+        'id', 'text', 'sentiment', 'customer_name', 
+        'feedback_date', 'product_area', 'session__session_number', 'created_at'
+    ))
+
+    # Prepara a resposta JSON
+    response = JsonResponse(data_to_export, safe=False, json_dumps_params={'ensure_ascii': False, 'indent': 2})
+    response['Content-Disposition'] = 'attachment; filename="feedbacks_export.json"'
+    
+    return response
