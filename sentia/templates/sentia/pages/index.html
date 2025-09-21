@@ -1,6 +1,5 @@
 {% extends 'sentia/base.html' %}
-
-{% block title %}Analisar Feedbacks | Sent.IA{% endblock %}
+{% load static %} {% block title %}Analisar Feedbacks | Sent.IA{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -85,7 +84,20 @@
                     <div class="mb-4">
                         <label for="csvFile" class="form-label fw-bold">Selecione o arquivo CSV</label>
                         <input class="form-control form-control-custom" type="file" id="csvFile" name="csv_file" accept=".csv" required>
-                        <div class="form-text mt-2">Apenas arquivos no formato .csv são permitidos.</div>
+                        
+                        <div class="form-text mt-3 bg-light p-3 rounded">
+                            <h6 class="fw-bold mb-2"><i class="fa-solid fa-circle-info me-1"></i>Estrutura do arquivo CSV:</h6>
+                            <ul class="list-unstyled mb-0 small">
+                                <li><strong>Obrigatória:</strong> Uma coluna com o texto do feedback. Aceitamos os nomes: <code>feedback_text</code>, <code>Feedback</code>, <code>texto_feedback</code>, ou <code>comentario</code>.</li>
+                                <li class="mt-1">
+                                    <strong>Opcionais:</strong> Você pode enriquecer a análise adicionando colunas extras, como 
+                                    <code>customer_name</code> (nome do cliente), 
+                                    <code>feedback_date</code> (data do feedback) e 
+                                    <code>product_area</code> (área ou categoria do produto).
+                                </li>
+                                <li class="mt-2"><a href="{% static 'templates/feedback_template.csv' %}"><i class="fa-solid fa-download me-1"></i>Clique aqui para baixar um modelo de CSV.</a></li>
+                            </ul>
+                        </div>
                     </div>
                     
                     <button type="submit" class="btn btn-custom-blue w-100">

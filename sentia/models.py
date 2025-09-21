@@ -27,28 +27,22 @@ class AnalysisSessionManager(models.Manager):
             )
         )
 
-    # --- NOVO MÉTODO ADICIONADO AQUI ---
     def get_next_session_number(self):
         """
         Calcula o próximo número de sessão disponível, encontrando a primeira
         lacuna na sequência de números existentes.
         """
-        # Pega todos os números de sessão existentes em ordem.
         existing_numbers = self.get_queryset().values_list('session_number', flat=True).order_by('session_number')
         
-        # Se não houver nenhum, começa com 1.
         if not existing_numbers:
             return 1
 
-        # Procura pela primeira lacuna na sequência.
         expected_number = 1
         for number in existing_numbers:
             if number > expected_number:
-                # Encontramos uma lacuna (ex: números são 1, 3 -> a lacuna é 2)
                 return expected_number
             expected_number += 1
         
-        # Se não houver lacunas (ex: 1, 2, 3), retorna o próximo da sequência.
         return expected_number
 
 # --- Modelo Principal ---
@@ -56,7 +50,6 @@ class AnalysisSession(models.Model):
     """
     Representa um único evento de análise.
     """
-    # --- NOVO CAMPO ADICIONADO AQUI ---
     session_number = models.IntegerField(unique=True, verbose_name="Número da Sessão")
 
     created_at = models.DateTimeField(
@@ -118,11 +111,15 @@ class Feedback(models.Model):
         null=True, 
         verbose_name="Nome do Cliente"
     )
-    feedback_date = models.DateTimeField(
+    
+    # --- CAMPO ALTERADO ---
+    # O campo foi alterado de DateTimeField para DateField.
+    feedback_date = models.DateField(
         blank=True, 
         null=True, 
         verbose_name="Data do Feedback"
     )
+    
     product_area = models.CharField(
         max_length=100, 
         blank=True, 

@@ -203,7 +203,7 @@
                             {% endif %}
                         </td>
                         <td>{{ feedback.customer_name|default:"N/A" }}</td>
-                        <td>{{ feedback.feedback_date|date:"d/m/Y H:i"|default:"N/A" }}</td>
+                        <td>{{ feedback.feedback_date|date:"d/m/Y"|default:"N/A" }}</td>
                         <td>{{ feedback.product_area|default:"N/A" }}</td>
                         <td><a href="?session={{ feedback.session.id }}">#{{ feedback.session.session_number }}</a></td>
                         <td class="pe-3">{{ feedback.created_at|date:"d/m/Y H:i" }}</td>

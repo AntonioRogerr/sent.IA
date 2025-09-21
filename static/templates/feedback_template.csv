@@ -1,0 +1,4 @@
+feedback_text,customer_name,feedback_date,product_area
+"Este é um exemplo de feedback positivo, adorei o produto!",Cliente A,2025-09-21,Produto X
+"O serviço estava muito lento e deixou a desejar.",Cliente B,2025-09-20,Serviço Y
+"A interface é um pouco confusa, mas funciona.",Cliente C,2025-09-19,Produto Z

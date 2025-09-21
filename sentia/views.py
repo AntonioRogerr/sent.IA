@@ -12,7 +12,7 @@ def index_view(request):
     if request.method == 'POST':
         if 'csv_file' in request.FILES:
             csv_file = request.FILES['csv_file']
-            
+
             # --- Bloco de validação ---
             if not csv_file:
                 return render(request, 'sentia/pages/index.html', {
@@ -22,68 +22,73 @@ def index_view(request):
                 return render(request, 'sentia/pages/index.html', {
                     'error_message': 'Por favor, envie um arquivo CSV válido.'
                 })
-            
-            # --- ALTERAÇÃO AQUI: Bloco de Processamento com o novo número de sessão ---
-            # 1. Busca o próximo número de sessão disponível
-            next_number = AnalysisSession.objects.get_next_session_number()
 
-            # 2. Cria a nova sessão com o número calculado
-            new_session = AnalysisSession.objects.create(
-                csv_filename=csv_file.name,
-                session_number=next_number
-            )
-            
             # Decodifica o arquivo e prepara para leitura
             decoded_file = csv_file.read().decode('utf-8-sig')
             io_string = io.StringIO(decoded_file)
             reader = csv.DictReader(io_string)
-            
+
+            # --- Bloco de validação de cabeçalho ---
+            header = reader.fieldnames
+            required_cols_options = ['feedback_text', 'Feedback', 'texto_feedback', 'comentario']
+
+            if not any(col in header for col in required_cols_options):
+                error_msg = (
+                    "O arquivo CSV precisa ter uma coluna para o feedback. "
+                    f"Nenhuma das colunas esperadas foi encontrada: {', '.join(required_cols_options)}."
+                )
+                return render(request, 'sentia/pages/index.html', {'error_message': error_msg})
+            # --- Fim do bloco ---
+
+            next_number = AnalysisSession.objects.get_next_session_number()
+            new_session = AnalysisSession.objects.create(
+                csv_filename=csv_file.name,
+                session_number=next_number
+            )
+
             feedbacks_to_create = []
-            
+
             # Itera sobre as linhas do CSV
             for row in reader:
                 feedback_text = row.get('feedback_text', row.get('Feedback', '')).strip()
                 if not feedback_text:
                     continue
-                
-                # Extrai outros dados (se existirem)
+
                 customer_name = row.get('customer_name', row.get('Cliente', '')).strip()
                 feedback_date_str = row.get('feedback_date', row.get('Data', '')).strip()
                 product_area = row.get('product_area', row.get('Area Produto', '')).strip()
-                
-                # Tenta converter a data em múltiplos formatos
+
+                # --- LÓGICA DE DATA ATUALIZADA ---
                 parsed_date = None
                 if feedback_date_str:
-                    for fmt in ('%Y-%m-%d %H:%M:%S', '%d/%m/%Y %H:%M', '%Y-%m-%d', '%d/%m/%Y'):
+                    # A lista de formatos agora inclui data e data+hora
+                    for fmt in ('%Y-%m-%d', '%d/%m/%Y', '%Y-%m-%d %H:%M:%S', '%d/%m/%Y %H:%M'):
                         try:
-                            parsed_date = datetime.strptime(feedback_date_str, fmt)
+                            # Converte para datetime e extrai apenas a data com .date()
+                            parsed_date = datetime.strptime(feedback_date_str, fmt).date()
                             break
                         except ValueError:
                             pass
-                
-                # Analisa o sentimento e prepara para salvar
+                # --- FIM DA ALTERAÇÃO ---
+
                 sentiment_result = analyze_sentiment_with_ollama(feedback_text)
                 feedbacks_to_create.append(
                     Feedback(
-                        session=new_session, 
-                        text=feedback_text, 
+                        session=new_session,
+                        text=feedback_text,
                         sentiment=sentiment_result,
                         customer_name=customer_name if customer_name else None,
-                        feedback_date=parsed_date, 
+                        feedback_date=parsed_date,
                         product_area=product_area if product_area else None
                     )
                 )
-            
-            # Salva todos os feedbacks no banco de uma vez
+
             if feedbacks_to_create:
                 Feedback.objects.bulk_create(feedbacks_to_create)
 
-            # --- ALTERAÇÃO AQUI: Usa o session_number na mensagem ---
-            # Adiciona a mensagem de sucesso e redireciona para o dashboard
             messages.success(request, f"CSV '{csv_file.name}' analisado com sucesso e salvo na sessão #{new_session.session_number}.")
             return redirect('dashboard')
 
-    # Se a requisição não for POST, apenas renderiza a página de upload
     return render(request, 'sentia/pages/index.html')
 
 def dashboard_view(request):
@@ -91,7 +96,7 @@ def dashboard_view(request):
     selected_session_id = request.GET.get('session')
     selected_sentiment = request.GET.get('sentiment')
     selected_product_area = request.GET.get('product_area')
-    
+
     if selected_session_id:
         all_feedbacks = all_feedbacks.filter(session__id=selected_session_id)
     if selected_sentiment:
@@ -114,9 +119,7 @@ def dashboard_view(request):
         'unknown_percent': (unknown_count / total_feedbacks * 100) if total_feedbacks else 0,
     }
 
-    # Utiliza o seu manager otimizado para buscar as sessões
     all_sessions = AnalysisSession.objects.with_feedback_counts().order_by('-created_at')
-    
     all_product_areas = Feedback.objects.filter(product_area__isnull=False).values_list('product_area', flat=True).distinct()
 
     context = {
@@ -136,17 +139,9 @@ def delete_session_view(request, session_id):
     if request.method == 'POST':
         try:
             session_to_delete = AnalysisSession.objects.get(id=session_id)
-            
-            # Guarda o número da sessão ANTES de apagar o objeto
             session_number_to_display = session_to_delete.session_number
-            
-            # Apaga a sessão do banco de dados
             session_to_delete.delete()
-            
-            # Usa o número guardado para a mensagem de sucesso
             messages.success(request, f'Sessão #{session_number_to_display} foi excluída com sucesso.')
-
         except AnalysisSession.DoesNotExist:
             messages.error(request, f'Sessão #{session_id} não encontrada.')
-    
     return redirect('dashboard')
