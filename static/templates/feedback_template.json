@@ -1,0 +1,20 @@
+[
+  {
+    "feedback_text": "Este é um exemplo de feedback positivo, adorei o produto!",
+    "customer_name": "Cliente A",
+    "feedback_date": "2025-09-21",
+    "product_area": "Produto X"
+  },
+  {
+    "feedback_text": "O serviço estava muito lento e deixou a desejar.",
+    "customer_name": "Cliente B",
+    "feedback_date": "2025-09-20",
+    "product_area": "Serviço Y"
+  },
+  {
+    "feedback_text": "A interface é um pouco confusa, mas funciona.",
+    "customer_name": "Cliente C",
+    "feedback_date": "2025-09-19",
+    "product_area": "Produto Z"
+  }
+]

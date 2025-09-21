@@ -2,6 +2,7 @@
 
 import csv
 import io
+import json
 from datetime import datetime
 from django.shortcuts import render, redirect
 from django.contrib import messages
@@ -10,78 +11,84 @@ from .ollama_analyzer import analyze_sentiment_with_ollama
 
 def index_view(request):
     if request.method == 'POST':
-        if 'csv_file' in request.FILES:
-            csv_file = request.FILES['csv_file']
+        if 'file' in request.FILES:
+            uploaded_file = request.FILES['file']
 
             # --- Bloco de validação ---
-            if not csv_file:
+            if not uploaded_file:
                 return render(request, 'sentia/pages/index.html', {
                     'error_message': 'Por favor, selecione um arquivo para enviar.'
                 })
-            if not csv_file.name.endswith('.csv'):
+            
+            is_csv = uploaded_file.name.endswith('.csv')
+            is_json = uploaded_file.name.endswith('.json')
+
+            if not is_csv and not is_json:
                 return render(request, 'sentia/pages/index.html', {
-                    'error_message': 'Por favor, envie um arquivo CSV válido.'
+                    'error_message': 'Por favor, envie um arquivo CSV ou JSON válido.'
                 })
 
-            # --- LÓGICA DE DECODIFICAÇÃO ATUALIZADA ---
-            # Tenta decodificar como UTF-8 (padrão), se falhar, tenta como Latin-1 (comum no Excel)
-            file_content = csv_file.read()
+            # --- LÓGICA DE DECODIFICAÇÃO E LEITURA ---
             try:
-                decoded_file = file_content.decode('utf-8-sig')
+                decoded_file = uploaded_file.read().decode('utf-8-sig')
             except UnicodeDecodeError:
+                return render(request, 'sentia/pages/index.html', {
+                    'error_message': 'Não foi possível decodificar o arquivo. Tente salvá-lo com a codificação UTF-8.'
+                })
+
+            feedbacks_data = []
+            if is_csv:
+                io_string = io.StringIO(decoded_file)
+                reader = csv.DictReader(io_string)
+                feedbacks_data = list(reader)
+            elif is_json:
                 try:
-                    decoded_file = file_content.decode('latin-1')
-                except UnicodeDecodeError:
+                    feedbacks_data = json.loads(decoded_file)
+                except json.JSONDecodeError:
                     return render(request, 'sentia/pages/index.html', {
-                        'error_message': 'Não foi possível decodificar o arquivo. Tente salvá-lo com a codificação UTF-8.'
+                        'error_message': 'Erro ao decodificar o arquivo JSON. Verifique a formatação.'
                     })
-            # --- FIM DA ALTERAÇÃO ---
             
-            io_string = io.StringIO(decoded_file)
-            reader = csv.DictReader(io_string)
-
-            # --- Bloco de validação de cabeçalho ---
-            header = reader.fieldnames
+            # --- Validação de cabeçalho/chaves ---
+            if not feedbacks_data:
+                 return render(request, 'sentia/pages/index.html', {
+                    'error_message': 'O arquivo enviado está vazio ou mal formatado.'
+                })
+            
+            first_item = feedbacks_data[0]
             required_cols_options = ['feedback_text', 'Feedback', 'texto_feedback', 'comentario']
-
-            if not any(col in header for col in required_cols_options):
+            if not any(col in first_item for col in required_cols_options):
                 error_msg = (
-                    "O arquivo CSV precisa ter uma coluna para o feedback. "
-                    f"Nenhuma das colunas esperadas foi encontrada: {', '.join(required_cols_options)}."
+                    f"O arquivo {('CSV' if is_csv else 'JSON')} precisa ter uma chave/coluna para o feedback. "
+                    f"Nenhuma das esperadas foi encontrada: {', '.join(required_cols_options)}."
                 )
                 return render(request, 'sentia/pages/index.html', {'error_message': error_msg})
-            # --- Fim do bloco ---
 
             next_number = AnalysisSession.objects.get_next_session_number()
             new_session = AnalysisSession.objects.create(
-                csv_filename=csv_file.name,
+                csv_filename=uploaded_file.name,
                 session_number=next_number
             )
 
             feedbacks_to_create = []
 
-            # Itera sobre as linhas do CSV
-            for row in reader:
-                feedback_text = row.get('feedback_text', row.get('Feedback', '')).strip()
+            for item in feedbacks_data:
+                feedback_text = item.get('feedback_text', item.get('Feedback', '')).strip()
                 if not feedback_text:
                     continue
 
-                customer_name = row.get('customer_name', row.get('Cliente', '')).strip()
-                feedback_date_str = row.get('feedback_date', row.get('Data', '')).strip()
-                product_area = row.get('product_area', row.get('Area Produto', '')).strip()
+                customer_name = item.get('customer_name', item.get('Cliente', '')).strip()
+                feedback_date_str = item.get('feedback_date', item.get('Data', '')).strip()
+                product_area = item.get('product_area', item.get('Area Produto', '')).strip()
 
-                # --- LÓGICA DE DATA ATUALIZADA ---
                 parsed_date = None
                 if feedback_date_str:
-                    # A lista de formatos agora inclui data e data+hora
                     for fmt in ('%Y-%m-%d', '%d/%m/%Y', '%Y-%m-%d %H:%M:%S', '%d/%m/%Y %H:%M'):
                         try:
-                            # Converte para datetime e extrai apenas a data com .date()
                             parsed_date = datetime.strptime(feedback_date_str, fmt).date()
                             break
                         except ValueError:
                             pass
-                # --- FIM DA ALTERAÇÃO ---
 
                 sentiment_result = analyze_sentiment_with_ollama(feedback_text)
                 feedbacks_to_create.append(
@@ -98,10 +105,11 @@ def index_view(request):
             if feedbacks_to_create:
                 Feedback.objects.bulk_create(feedbacks_to_create)
 
-            messages.success(request, f"CSV '{csv_file.name}' analisado com sucesso e salvo na sessão #{new_session.session_number}.")
+            messages.success(request, f"Arquivo '{uploaded_file.name}' analisado com sucesso e salvo na sessão #{new_session.session_number}.")
             return redirect('dashboard')
 
     return render(request, 'sentia/pages/index.html')
+
 
 def dashboard_view(request):
     all_feedbacks = Feedback.objects.all()

@@ -82,20 +82,21 @@
                     {% csrf_token %}
                     
                     <div class="mb-4">
-                        <label for="csvFile" class="form-label fw-bold">Selecione o arquivo CSV</label>
-                        <input class="form-control form-control-custom" type="file" id="csvFile" name="csv_file" accept=".csv" required>
+                        <label for="fileUpload" class="form-label fw-bold">Selecione o arquivo CSV ou JSON</label>
+                        <input class="form-control form-control-custom" type="file" id="fileUpload" name="file" accept=".csv,.json" required>
                         
                         <div class="form-text mt-3 bg-light p-3 rounded">
-                            <h6 class="fw-bold mb-2"><i class="fa-solid fa-circle-info me-1"></i>Estrutura do arquivo CSV:</h6>
+                            <h6 class="fw-bold mb-2"><i class="fa-solid fa-circle-info me-1"></i>Estrutura do arquivo:</h6>
                             <ul class="list-unstyled mb-0 small">
-                                <li><strong>Obrigatória:</strong> Uma coluna com o texto do feedback. Aceitamos os nomes: <code>feedback_text</code>, <code>Feedback</code>, <code>texto_feedback</code>, ou <code>comentario</code>.</li>
+                                <li><strong>Obrigatória:</strong> Uma coluna/chave com o texto do feedback. Aceitamos: <code>feedback_text</code>, <code>Feedback</code>, <code>texto_feedback</code>, ou <code>comentario</code>.</li>
                                 <li class="mt-1">
-                                    <strong>Opcionais:</strong> Você pode enriquecer a análise adicionando colunas extras, como 
+                                    <strong>Opcionais:</strong> Você pode enriquecer a análise adicionando colunas/chaves extras, como 
                                     <code>customer_name</code> (nome do cliente), 
                                     <code>feedback_date</code> (data do feedback) e 
                                     <code>product_area</code> (área ou categoria do produto).
                                 </li>
-                                <li class="mt-2"><a href="{% static 'templates/feedback_template.csv' %}"><i class="fa-solid fa-download me-1"></i>Clique aqui para baixar um modelo de CSV.</a></li>
+                                <li class="mt-2"><a href="{% static 'templates/feedback_template.csv' %}" download><i class="fa-solid fa-download me-1"></i>Baixar modelo de CSV.</a></li>
+                                <li class="mt-1"><a href="{% static 'templates/feedback_template.json' %}" download><i class="fa-solid fa-download me-1"></i>Baixar modelo de JSON.</a></li>
                             </ul>
                         </div>
                     </div>
@@ -131,7 +132,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const processingModal = new bootstrap.Modal(document.getElementById('processingModal'));
 
     uploadForm.addEventListener('submit', function (event) {
-        const fileInput = document.getElementById('csvFile');
+        const fileInput = document.getElementById('fileUpload');
         // Verifica se um arquivo foi selecionado antes de mostrar o modal
         if (fileInput.files.length > 0) {
             processingModal.show();
