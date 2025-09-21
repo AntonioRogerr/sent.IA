@@ -3,223 +3,254 @@
 {% block title %}Dashboard | Sent.IA{% endblock %}
 
 {% block content %}
-<h1 class="mb-4 text-center">Dashboard de Sentimento</h1>
-
 {% if messages %}
     {% for message in messages %}
-        <div class="alert alert-success text-center" role="alert">
-            {{ message }}
-        </div>
+    <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
+        <i class="fa-solid fa-circle-check me-2"></i>{{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
     {% endfor %}
 {% endif %}
 
-<div class="card mb-4 p-3">
-    <h3 class="h5 mb-3">Filtros</h3>
-    <form method="GET" action="{% url 'dashboard' %}" class="row g-3 align-items-end">
-        <div class="col-md-4">
-            <label for="sessionFilter" class="form-label">Sessão de Análise:</label>
-            <select class="form-select" id="sessionFilter" name="session">
-                <option value="">Todas as Sessões</option>
-                {% for session in all_sessions %}
-                    <option value="{{ session.id }}" {% if selected_session_id|slugify == session.id|slugify %}selected{% endif %}>
-                        {{ session }}
-                    </option>
-                {% endfor %}
-            </select>
-        </div>
-        <div class="col-md-3">
-            <label for="sentimentFilter" class="form-label">Sentimento:</label>
-            <select class="form-select" id="sentimentFilter" name="sentiment">
-                <option value="">Todos</option>
-                {% for choice_value, choice_label in sentiment_choices %}
-                    <option value="{{ choice_value }}" {% if selected_sentiment == choice_value %}selected{% endif %}>
-                        {{ choice_label }}
-                    </option>
-                {% endfor %}
-            </select>
-        </div>
-        <div class="col-md-3">
-            <label for="productAreaFilter" class="form-label">Área do Produto:</label>
-            <select class="form-select" id="productAreaFilter" name="product_area">
-                <option value="">Todas as Áreas</option>
-                {% for area in all_product_areas %}
-                    <option value="{{ area }}" {% if selected_product_area == area %}selected{% endif %}>
-                        {{ area }}
-                    </option>
-                {% endfor %}
-            </select>
-        </div>
-        <div class="col-md-2 d-grid">
-            <button type="submit" class="btn btn-info">
-                <i class="fa-solid fa-filter me-2"></i> Aplicar Filtros
-            </button>
-        </div>
-    </form>
+
+<div class="card shadow mb-4">
+    <div class="card-header bg-light">
+        <h5 class="card-title mb-0">
+            <i class="fa-solid fa-filter me-2"></i>Filtros
+        </h5>
+    </div>
+    <div class="card-body">
+        <form method="GET" action="{% url 'dashboard' %}" class="row g-3 align-items-end">
+            <div class="col-md-3">
+                <label for="sessionFilter" class="form-label">Sessão de Análise</label>
+                <select class="form-select" id="sessionFilter" name="session">
+                    <option value="">Todas as Sessões</option>
+                    {% for session in all_sessions %}
+                        <option value="{{ session.id }}" {% if selected_session_id|slugify == session.id|slugify %}selected{% endif %}>
+                            {{ session }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="col-md-3">
+                <label for="sentimentFilter" class="form-label">Sentimento</label>
+                <select class="form-select" id="sentimentFilter" name="sentiment">
+                    <option value="">Todos</option>
+                    {% for choice_value, choice_label in sentiment_choices %}
+                        <option value="{{ choice_value }}" {% if selected_sentiment == choice_value %}selected{% endif %}>
+                            {{ choice_label }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="col-md-4">
+                <label for="productAreaFilter" class="form-label">Área do Produto</label>
+                <select class="form-select" id="productAreaFilter" name="product_area">
+                    <option value="">Todas as Áreas</option>
+                    {% for area in all_product_areas %}
+                        <option value="{{ area }}" {% if selected_product_area == area %}selected{% endif %}>
+                            {{ area }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="col-md-2 d-grid">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fa-solid fa-filter me-1"></i>Aplicar Filtros
+                </button>
+            </div>
+        </form>
+    </div>
 </div>
 
-
-<div class="row mb-5">
-    <div class="col-md-3 mb-3">
-        <div class="card text-center p-3">
-            <h5 class="card-title">Total de Feedbacks</h5>
-            <p class="display-4 fw-bold">{{ stats.total }}</p>
+<div class="row mb-4">
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="card text-center shadow h-100">
+            <div class="card-body">
+                <h6 class="card-title text-muted">Total de Feedbacks</h6>
+                <h3 class="card-text">{{ stats.total }}</h3>
+            </div>
         </div>
     </div>
-    <div class="col-md-3 mb-3">
-        <div class="card text-center p-3 border-success border-2">
-            <h5 class="card-title text-success">Positivos</h5>
-            <p class="display-4 fw-bold text-success">{{ stats.positive }} <small class="text-muted fs-6">({{ stats.positive_percent|floatformat:1 }}%)</small></p>
+    
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="card text-center shadow border-success h-100">
+            <div class="card-body">
+                <h6 class="card-title text-muted">Positivos</h6>
+                <h3 class="card-text text-success">{{ stats.positive }}</h3>
+                <p class="card-text text-success mb-0">{{ stats.positive_percent|floatformat:1 }}%</p>
+            </div>
         </div>
     </div>
-    <div class="col-md-3 mb-3">
-        <div class="card text-center p-3 border-danger border-2">
-            <h5 class="card-title text-danger">Negativos</h5>
-            <p class="display-4 fw-bold text-danger">{{ stats.negative }} <small class="text-muted fs-6">({{ stats.negative_percent|floatformat:1 }}%)</small></p>
+    
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="card text-center shadow border-danger h-100">
+            <div class="card-body">
+                <h6 class="card-title text-muted">Negativos</h6>
+                <h3 class="card-text text-danger">{{ stats.negative }}</h3>
+                <p class="card-text text-danger mb-0">{{ stats.negative_percent|floatformat:1 }}%</p>
+            </div>
         </div>
     </div>
-    <div class="col-md-3 mb-3">
-        <div class="card text-center p-3 border-secondary border-2">
-            <h5 class="card-title text-secondary">Neutros</h5>
-            <p class="display-4 fw-bold text-secondary">{{ stats.neutral }} <small class="text-muted fs-6">({{ stats.neutral_percent|floatformat:1 }}%)</small></p>
-        </div>
-    </div>
-     {% if stats.unknown > 0 %}
-    <div class="col-md-3 offset-md-4 mb-3"> {# Centraliza se houver apenas um #}
-        <div class="card text-center p-3 border-warning border-2">
-            <h5 class="card-title text-warning">Desconhecidos</h5>
-            <p class="display-4 fw-bold text-warning">{{ stats.unknown }} <small class="text-muted fs-6">({{ stats.unknown_percent|floatformat:1 }}%)</small></p>
-        </div>
-    </div>
-    {% endif %}
-</div>
-
-<div class="row justify-content-center">
-    <div class="col-lg-8">
-        <div class="card p-4">
-            <h2 class="text-center mb-3">Distribuição Percentual dos Sentimentos</h2>
-            <div style="max-height: 400px;">
-                <canvas id="sentimentChart"></canvas>
+    
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="card text-center shadow border-secondary h-100">
+            <div class="card-body">
+                <h6 class="card-title text-muted">Neutros</h6>
+                <h3 class="card-text text-secondary">{{ stats.neutral }}</h3>
+                <p class="card-text text-secondary mb-0">{{ stats.neutral_percent|floatformat:1 }}%</p>
             </div>
         </div>
     </div>
 </div>
 
-<div class="card mt-5">
-    <div class="card-header bg-white d-flex justify-content-between align-items-center">
-        <h2 class="h4 mb-0">Sessões de Análise</h2>
+<div class="row mb-4">
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow h-100">
+            <div class="card-header bg-light">
+                <h5 class="card-title mb-0">
+                    <i class="fa-solid fa-chart-pie me-2"></i>Distribuição de Sentimentos
+                </h5>
+            </div>
+            <div class="card-body d-flex justify-content-center align-items-center">
+                <canvas id="sentimentChart" style="max-height: 300px;"></canvas>
+            </div>
+        </div>
     </div>
-    <div class="table-responsive">
-        <table class="table table-hover mb-0">
-            <thead>
-                <tr>
-                    <th>Sessão</th>
-                    <th>Arquivo CSV</th>
-                    <th>Data da Análise</th>
-                    <th class="text-end">Ações</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for session in all_sessions %}
-                <tr>
-                    <td><a href="?session={{ session.id }}">#{{ session.id }}</a></td>
-                    <td>{{ session.csv_filename|default:"N/A" }}</td>
-                    <td>{{ session.created_at|date:"d/m/Y H:i" }}</td>
-                    <td class="text-end">
-                        <form action="{% url 'delete_session' session.id %}" method="POST" onsubmit="return confirm('Tem certeza que deseja excluir esta sessão? Todos os feedbacks associados serão perdidos.');">
-                            {% csrf_token %}
-                            <button type="submit" class="btn btn-danger btn-sm">
-                                <i class="fa-solid fa-trash-can me-1"></i> Excluir
-                            </button>
-                        </form>
-                    </td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="4" class="text-center p-4">Nenhuma sessão de análise encontrada.</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow h-100">
+            <div class="card-header bg-light">
+                <h5 class="card-title mb-0">
+                    <i class="fa-solid fa-history me-2"></i>Sessões de Análise
+                </h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th class="ps-3">Sessão</th>
+                                <th>Arquivo CSV</th>
+                                <th>Data da Análise</th>
+                                <th class="text-end pe-3">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for session in all_sessions %}
+                            <tr>
+                                <td class="ps-3"><a href="?session={{ session.id }}">#{{ session.session_number }}</a></td>
+                                <td>{{ session.csv_filename|default:"N/A" }}</td>
+                                <td>{{ session.created_at|date:"d/m/Y H:i" }}</td>
+                                <td class="text-end pe-3">
+                                    <form method="POST" action="{% url 'delete_session' session.id %}" class="d-inline">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Tem certeza que deseja excluir esta sessão?')">
+                                            <i class="fa-solid fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center p-4">Nenhuma sessão encontrada.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
-<div class="card mt-5">
-    <div class="card-header bg-white">
-        <h2 class="h4 mb-0">Últimos Feedbacks Analisados (filtrados)</h2>
+<div class="card shadow">
+    <div class="card-header bg-light">
+        <h5 class="card-title mb-0">
+            <i class="fa-solid fa-comments me-2"></i>Últimos Feedbacks Analisados (filtrados)
+        </h5>
     </div>
-    <div class="table-responsive">
-        <table class="table table-hover mb-0">
-            <thead>
-                <tr>
-                    <th>Feedback</th>
-                    <th>Sentimento</th>
-                    <th>Cliente</th>
-                    <th>Data Feedback</th>
-                    <th>Área Produto</th>
-                    <th>Sessão</th>
-                    <th>Analisado em</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for feedback in all_feedbacks %}
-                <tr>
-                    <td>{{ feedback.text|truncatechars:70 }}</td>
-                    <td>
-                        {% if feedback.sentiment == 'POS' %}
-                            <span class="badge bg-success-subtle text-success-emphasis rounded-pill">Positivo</span>
-                        {% elif feedback.sentiment == 'NEG' %}
-                            <span class="badge bg-danger-subtle text-danger-emphasis rounded-pill">Negativo</span>
-                        {% elif feedback.sentiment == 'NEU' %}
-                            <span class="badge bg-secondary-subtle text-secondary-emphasis rounded-pill">Neutro</span>
-                        {% else %}
-                             <span class="badge bg-warning-subtle text-warning-emphasis rounded-pill">Desconhecido</span>
-                        {% endif %}
-                    </td>
-                    <td>{{ feedback.customer_name|default:"N/A" }}</td>
-                    <td>{{ feedback.feedback_date|date:"d/m/Y H:i"|default:"N/A" }}</td>
-                    <td>{{ feedback.product_area|default:"N/A" }}</td>
-                    <td><a href="?session={{ feedback.session.id }}">#{{ feedback.session.id }}</a></td>
-                    <td>{{ feedback.created_at|date:"d/m/Y H:i" }}</td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="7" class="text-center p-4">Nenhum feedback encontrado com os filtros aplicados.</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-striped table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th class="ps-3">Feedback</th>
+                        <th>Sentimento</th>
+                        <th>Cliente</th>
+                        <th>Data Feedback</th>
+                        <th>Área Produto</th>
+                        <th>Sessão</th>
+                        <th class="pe-3">Analisado em</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for feedback in all_feedbacks %}
+                    <tr>
+                        <td class="ps-3">{{ feedback.text|truncatechars:70 }}</td>
+                        <td>
+                            {% if feedback.sentiment == 'POS' %}
+                                <span class="badge bg-success-subtle text-success-emphasis rounded-pill">Positivo</span>
+                            {% elif feedback.sentiment == 'NEG' %}
+                                <span class="badge bg-danger-subtle text-danger-emphasis rounded-pill">Negativo</span>
+                            {% elif feedback.sentiment == 'NEU' %}
+                                <span class="badge bg-secondary-subtle text-secondary-emphasis rounded-pill">Neutro</span>
+                            {% else %}
+                                 <span class="badge bg-warning-subtle text-warning-emphasis rounded-pill">Desconhecido</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ feedback.customer_name|default:"N/A" }}</td>
+                        <td>{{ feedback.feedback_date|date:"d/m/Y H:i"|default:"N/A" }}</td>
+                        <td>{{ feedback.product_area|default:"N/A" }}</td>
+                        <td><a href="?session={{ feedback.session.id }}">#{{ feedback.session.session_number }}</a></td>
+                        <td class="pe-3">{{ feedback.created_at|date:"d/m/Y H:i" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center p-4">Nenhum feedback encontrado com os filtros aplicados.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 
 {{ stats|json_script:"chart-data" }}
 
+{% endblock %}
+
+
+{% block extra_js %}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Pega os dados que o Django inseriu no HTML
         const statsData = JSON.parse(document.getElementById('chart-data').textContent);
-
+        
         const ctx = document.getElementById('sentimentChart').getContext('2d');
         const sentimentChart = new Chart(ctx, {
             type: 'doughnut',
             data: {
                 labels: ['Positivos', 'Negativos', 'Neutros', 'Desconhecidos'],
                 datasets: [{
-                    label: 'Feedbacks',
-                    // Usa os dados lidos do JSON
-                    data: [statsData.positive, statsData.negative, statsData.neutral, statsData.unknown],
+                    data: [
+                        statsData.positive || 0,
+                        statsData.negative || 0,
+                        statsData.neutral || 0,
+                        statsData.unknown || 0
+                    ],
                     backgroundColor: [
-                        'rgba(25, 135, 84, 0.7)',
-                        'rgba(220, 53, 69, 0.7)',
-                        'rgba(108, 117, 125, 0.7)',
-                        'rgba(255, 193, 7, 0.7)'
+                        'rgba(25, 135, 84, 0.8)',
+                        'rgba(220, 53, 69, 0.8)',
+                        'rgba(108, 117, 125, 0.8)',
+                        'rgba(255, 193, 7, 0.8)'
                     ],
                     borderColor: [
-                        'rgba(25, 135, 84, 1)',
-                        'rgba(220, 53, 69, 1)',
-                        'rgba(108, 117, 125, 1)',
-                        'rgba(255, 193, 7, 1)'
+                        '#ffffff'
                     ],
-                    borderWidth: 1
+                    borderWidth: 2
                 }]
             },
             options: {
@@ -227,23 +258,7 @@
                 maintainAspectRatio: false,
                 plugins: {
                     legend: {
-                        position: 'top',
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                let label = context.label || '';
-                                if (label) {
-                                    label += ': ';
-                                }
-                                if (context.parsed !== null) {
-                                    const total = context.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
-                                    const percentage = total > 0 ? ((context.raw / total) * 100).toFixed(1) + '%' : '0%';
-                                    label += context.raw + ' (' + percentage + ')';
-                                }
-                                return label;
-                            }
-                        }
+                        position: 'bottom'
                     }
                 }
             }

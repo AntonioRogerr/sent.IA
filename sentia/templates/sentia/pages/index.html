@@ -2,85 +2,129 @@
 
 {% block title %}Analisar Feedbacks | Sent.IA{% endblock %}
 
+{% block extra_css %}
+<style>
+    /* Estilos para o card com tons pastel */
+    .card-custom {
+        border: none; /* Remove a borda padrão */
+        border-radius: 0.8rem; /* Cantos mais arredondados */
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08) !important; /* Sombra mais suave */
+        transition: all 0.3s ease;
+    }
+
+    /* Cabeçalho do card em azul pastel */
+    .card-header-pastel {
+        background-color: #a0d2eb; /* Azul pastel */
+        color: #1c3e5c; /* Cor de texto escura para melhor contraste */
+        border-top-left-radius: 0.8rem;
+        border-top-right-radius: 0.8rem;
+        border-bottom: 0;
+        padding: 1.5rem;
+    }
+    
+    .card-title-custom {
+        font-weight: 600; /* Título um pouco mais forte */
+    }
+
+    /* Botão principal com tom azulado complementar */
+    .btn-custom-blue {
+        background-color: #4a90e2; /* Azul mais forte, mas ainda suave */
+        color: white;
+        border: none;
+        padding: 0.75rem 1rem;
+        font-weight: 500;
+        transition: background-color 0.3s ease;
+    }
+
+    .btn-custom-blue:hover {
+        background-color: #357abd; /* Tom mais escuro para o hover */
+        color: white;
+    }
+
+    /* Estilo para o campo de upload de arquivo */
+    .form-control-custom {
+        padding: 0.75rem;
+    }
+
+    /* Modal com o spinner na mesma cor do botão */
+    .spinner-custom {
+        color: #4a90e2;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-lg-10">
-        <div class="card p-4 p-md-5">
-            <div class="card-body">
-                <h1 class="card-title text-center mb-4">Ferramenta de Análise de Sentimento</h1>
-                <p class="text-center text-muted mb-4">Analise feedbacks enviando um arquivo CSV.</p>
+<div class="row justify-content-center py-5">
+    <div class="col-md-10 col-lg-8 col-xl-7">
+        <div class="card card-custom">
+            <div class="card-header card-header-pastel text-center">
+                <h4 class="card-title-custom mb-1">
+                    <i class="fa-solid fa-robot me-2"></i>Análise de Sentimento
+                </h4>
+                <p class="mb-0 text-muted small">Faça o upload do seu arquivo para extrair insights valiosos.</p>
+            </div>
+            <div class="card-body p-4 p-md-5">
+                
+                {% if error_message %}
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="fa-solid fa-circle-exclamation me-2"></i>{{ error_message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                {% endif %}
                 
                 {% if message %}
-                    <div class="alert alert-success text-center" role="alert">
-                        {{ message }}
-                    </div>
-                {% endif %}
-                {% if error_message %}
-                    <div class="alert alert-danger text-center" role="alert">
-                        {{ error_message }}
-                    </div>
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="fa-solid fa-circle-check me-2"></i>{{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
                 {% endif %}
 
-                <form method="POST" action="{% url 'index' %}" enctype="multipart/form-data" class="mb-5 p-4 border rounded bg-light">
+                <form method="POST" action="{% url 'index' %}" enctype="multipart/form-data" id="uploadForm">
                     {% csrf_token %}
-                    <h3 class="mb-3 text-center">Analisar via CSV</h3>
-                    <p class="text-muted text-center small">Seu CSV deve conter uma coluna para o texto do feedback (ex: 'feedback_text' ou 'Feedback') e pode ter colunas opcionais como 'customer_name', 'feedback_date', 'product_area'.</p>
-                    <div class="mb-3">
-                        <label for="csvFile" class="form-label">Selecione um arquivo CSV:</label>
-                        <input class="form-control" type="file" id="csvFile" name="csv_file" accept=".csv" required>
+                    
+                    <div class="mb-4">
+                        <label for="csvFile" class="form-label fw-bold">Selecione o arquivo CSV</label>
+                        <input class="form-control form-control-custom" type="file" id="csvFile" name="csv_file" accept=".csv" required>
+                        <div class="form-text mt-2">Apenas arquivos no formato .csv são permitidos.</div>
                     </div>
-                    <div class="d-grid">
-                        <button type="submit" class="btn btn-success btn-lg">
-                            <i class="fa-solid fa-file-csv me-2"></i> Enviar e Analisar CSV
-                        </button>
-                    </div>
+                    
+                    <button type="submit" class="btn btn-custom-blue w-100">
+                        <i class="fa-solid fa-paper-plane me-2"></i>Enviar e Analisar
+                    </button>
                 </form>
-
             </div>
         </div>
-
-        {% if results %}
-        <div class="card mt-5">
-            <div class="card-header bg-white">
-                <h2 class="h4 mb-0">Resultados da Análise (Sessão #{{ session_id }})</h2>
-            </div>
-            <ul class="list-group list-group-flush">
-                {% for result in results %}
-                <li class="list-group-item p-3">
-                    <div class="d-flex w-100 justify-content-between align-items-center">
-                        <div>
-                            <p class="mb-1"><em>"{{ result.text }}"</em></p>
-                            <small class="text-muted">
-                                {% if result.customer_name %}Cliente: {{ result.customer_name }} | {% endif %}
-                                {% if result.feedback_date %}Data: {{ result.feedback_date|date:"d/m/Y H:i" }} | {% endif %}
-                                {% if result.product_area %}Área: {{ result.product_area }}{% endif %}
-                            </small>
-                        </div>
-                        
-                        {% if result.sentiment == 'Positivo' %}
-                            <span class="badge bg-success-subtle text-success-emphasis rounded-pill fs-6">
-                                <i class="fa-solid fa-thumbs-up me-1"></i> Positivo
-                            </span>
-                        {% elif result.sentiment == 'Negativo' %}
-                            <span class="badge bg-danger-subtle text-danger-emphasis rounded-pill fs-6">
-                                <i class="fa-solid fa-thumbs-down me-1"></i> Negativo
-                            </span>
-                        {% elif result.sentiment == 'Neutro' %}
-                            <span class="badge bg-secondary-subtle text-secondary-emphasis rounded-pill fs-6">
-                                <i class="fa-solid fa-meh me-1"></i> Neutro
-                            </span>
-                        {% else %}
-                             <span class="badge bg-warning-subtle text-warning-emphasis rounded-pill fs-6">
-                                <i class="fa-solid fa-question-circle me-1"></i> Desconhecido
-                            </span>
-                        {% endif %}
-                    </div>
-                </li>
-                {% endfor %}
-            </ul>
-        </div>
-        {% endif %}
-
     </div>
 </div>
+
+<div class="modal fade" id="processingModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="processingModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0" style="border-radius: 0.8rem;">
+            <div class="modal-body text-center p-4">
+                <div class="spinner-border spinner-custom mb-3" role="status" style="width: 3rem; height: 3rem;">
+                    <span class="visually-hidden">Carregando...</span>
+                </div>
+                <h5 class="modal-title mb-2" id="processingModalLabel">Analisando seus dados...</h5>
+                <p class="text-muted small">Isso pode levar alguns instantes. Por favor, aguarde.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const uploadForm = document.getElementById('uploadForm');
+    const processingModal = new bootstrap.Modal(document.getElementById('processingModal'));
+
+    uploadForm.addEventListener('submit', function (event) {
+        const fileInput = document.getElementById('csvFile');
+        // Verifica se um arquivo foi selecionado antes de mostrar o modal
+        if (fileInput.files.length > 0) {
+            processingModal.show();
+        }
+    });
+});
+</script>
 {% endblock %}

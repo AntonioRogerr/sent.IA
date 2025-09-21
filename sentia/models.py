@@ -27,12 +27,38 @@ class AnalysisSessionManager(models.Manager):
             )
         )
 
+    # --- NOVO MÉTODO ADICIONADO AQUI ---
+    def get_next_session_number(self):
+        """
+        Calcula o próximo número de sessão disponível, encontrando a primeira
+        lacuna na sequência de números existentes.
+        """
+        # Pega todos os números de sessão existentes em ordem.
+        existing_numbers = self.get_queryset().values_list('session_number', flat=True).order_by('session_number')
+        
+        # Se não houver nenhum, começa com 1.
+        if not existing_numbers:
+            return 1
+
+        # Procura pela primeira lacuna na sequência.
+        expected_number = 1
+        for number in existing_numbers:
+            if number > expected_number:
+                # Encontramos uma lacuna (ex: números são 1, 3 -> a lacuna é 2)
+                return expected_number
+            expected_number += 1
+        
+        # Se não houver lacunas (ex: 1, 2, 3), retorna o próximo da sequência.
+        return expected_number
+
 # --- Modelo Principal ---
 class AnalysisSession(models.Model):
     """
-    Representa um único evento de análise, agora com métodos otimizados
-    para buscar estatísticas de feedback.
+    Representa um único evento de análise.
     """
+    # --- NOVO CAMPO ADICIONADO AQUI ---
+    session_number = models.IntegerField(unique=True, verbose_name="Número da Sessão")
+
     created_at = models.DateTimeField(
         default=timezone.now,
         verbose_name="Data da Análise"
@@ -44,14 +70,14 @@ class AnalysisSession(models.Model):
         verbose_name="Nome do Arquivo CSV"
     )
 
-    # --- LIGAÇÃO COM O MANAGER PERSONALIZADO ---
     objects = AnalysisSessionManager()
 
     def __str__(self):
         local_time = timezone.localtime(self.created_at)
+        display_number = f" (Sessão #{self.session_number})" if self.session_number else ""
         if self.csv_filename:
-            return f"Análise do CSV '{self.csv_filename}' em {local_time.strftime('%d/%m/%Y às %H:%M')}"
-        return f"Análise avulsa em {local_time.strftime('%d/%m/%Y às %H:%M')}"
+            return f"Análise do CSV '{self.csv_filename}' em {local_time.strftime('%d/%m/%Y às %H:%M')}{display_number}"
+        return f"Análise avulsa em {local_time.strftime('%d/%m/%Y às %H:%M')}{display_number}"
 
     class Meta:
         verbose_name = "Sessão de Análise"

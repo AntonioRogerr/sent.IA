@@ -1,3 +1,5 @@
+# sentia/views.py
+
 import csv
 import io
 from datetime import datetime
@@ -10,6 +12,8 @@ def index_view(request):
     if request.method == 'POST':
         if 'csv_file' in request.FILES:
             csv_file = request.FILES['csv_file']
+            
+            # --- Bloco de validação ---
             if not csv_file:
                 return render(request, 'sentia/pages/index.html', {
                     'error_message': 'Por favor, selecione um arquivo para enviar.'
@@ -19,57 +23,68 @@ def index_view(request):
                     'error_message': 'Por favor, envie um arquivo CSV válido.'
                 })
             
-            new_session = AnalysisSession.objects.create(csv_filename=csv_file.name)
+            # --- ALTERAÇÃO AQUI: Bloco de Processamento com o novo número de sessão ---
+            # 1. Busca o próximo número de sessão disponível
+            next_number = AnalysisSession.objects.get_next_session_number()
+
+            # 2. Cria a nova sessão com o número calculado
+            new_session = AnalysisSession.objects.create(
+                csv_filename=csv_file.name,
+                session_number=next_number
+            )
+            
+            # Decodifica o arquivo e prepara para leitura
             decoded_file = csv_file.read().decode('utf-8-sig')
             io_string = io.StringIO(decoded_file)
             reader = csv.DictReader(io_string)
             
             feedbacks_to_create = []
-            results_to_display = []
+            
+            # Itera sobre as linhas do CSV
             for row in reader:
                 feedback_text = row.get('feedback_text', row.get('Feedback', '')).strip()
                 if not feedback_text:
                     continue
+                
+                # Extrai outros dados (se existirem)
                 customer_name = row.get('customer_name', row.get('Cliente', '')).strip()
                 feedback_date_str = row.get('feedback_date', row.get('Data', '')).strip()
                 product_area = row.get('product_area', row.get('Area Produto', '')).strip()
+                
+                # Tenta converter a data em múltiplos formatos
                 parsed_date = None
                 if feedback_date_str:
-                    try:
-                        parsed_date = datetime.strptime(feedback_date_str, '%Y-%m-%d %H:%M:%S')
-                    except ValueError:
+                    for fmt in ('%Y-%m-%d %H:%M:%S', '%d/%m/%Y %H:%M', '%Y-%m-%d', '%d/%m/%Y'):
                         try:
-                            parsed_date = datetime.strptime(feedback_date_str, '%d/%m/%Y %H:%M')
+                            parsed_date = datetime.strptime(feedback_date_str, fmt)
+                            break
                         except ValueError:
-                             try:
-                                parsed_date = datetime.strptime(feedback_date_str, '%Y-%m-%d')
-                             except ValueError:
-                                try:
-                                    parsed_date = datetime.strptime(feedback_date_str, '%d/%m/%Y')
-                                except ValueError:
-                                    pass
+                            pass
                 
+                # Analisa o sentimento e prepara para salvar
                 sentiment_result = analyze_sentiment_with_ollama(feedback_text)
                 feedbacks_to_create.append(
                     Feedback(
-                        session=new_session, text=feedback_text, sentiment=sentiment_result,
+                        session=new_session, 
+                        text=feedback_text, 
+                        sentiment=sentiment_result,
                         customer_name=customer_name if customer_name else None,
-                        feedback_date=parsed_date, product_area=product_area if product_area else None,
+                        feedback_date=parsed_date, 
+                        product_area=product_area if product_area else None
                     )
                 )
-                results_to_display.append({
-                    'text': feedback_text, 'sentiment': Feedback.SentimentChoices(sentiment_result).label,
-                    'customer_name': customer_name, 'feedback_date': parsed_date, 'product_area': product_area,
-                })
             
+            # Salva todos os feedbacks no banco de uma vez
             if feedbacks_to_create:
                 Feedback.objects.bulk_create(feedbacks_to_create)
-            return render(request, 'sentia/pages/index.html', {
-                'results': results_to_display, 'session_id': new_session.id,
-                'message': f"CSV '{csv_file.name}' analisado com sucesso e salvo na sessão #{new_session.id}."
-            })
-    return render(request, 'sentia/pages/index.html')
 
+            # --- ALTERAÇÃO AQUI: Usa o session_number na mensagem ---
+            # Adiciona a mensagem de sucesso e redireciona para o dashboard
+            messages.success(request, f"CSV '{csv_file.name}' analisado com sucesso e salvo na sessão #{new_session.session_number}.")
+            return redirect('dashboard')
+
+    # Se a requisição não for POST, apenas renderiza a página de upload
+    return render(request, 'sentia/pages/index.html')
 
 def dashboard_view(request):
     all_feedbacks = Feedback.objects.all()
@@ -121,8 +136,16 @@ def delete_session_view(request, session_id):
     if request.method == 'POST':
         try:
             session_to_delete = AnalysisSession.objects.get(id=session_id)
+            
+            # Guarda o número da sessão ANTES de apagar o objeto
+            session_number_to_display = session_to_delete.session_number
+            
+            # Apaga a sessão do banco de dados
             session_to_delete.delete()
-            messages.success(request, f'Sessão #{session_id} foi excluída com sucesso.')
+            
+            # Usa o número guardado para a mensagem de sucesso
+            messages.success(request, f'Sessão #{session_number_to_display} foi excluída com sucesso.')
+
         except AnalysisSession.DoesNotExist:
             messages.error(request, f'Sessão #{session_id} não encontrada.')
     
