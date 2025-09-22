@@ -1,105 +1,78 @@
-# sent.IA
+# Sent.IA - Análise de Sentimento com IA
 
-> Transforme Feedback em Ação com Insights Inteligentes
+*Página principal para upload de arquivos.*
 
-**sent.IA** é uma plataforma de código aberto projetada para otimizar a análise de feedback de clientes por meio de uma arquitetura escalável e conteinerizada construída em Django. Ele integra classificação de sentimento alimentada por IA.
+**Sent.IA** é uma aplicação web completa projetada para analisar o sentimento de feedbacks de clientes em massa. A ferramenta utiliza um modelo de linguagem rodando localmente via Ollama para classificar textos como positivos, negativos ou neutros, e apresenta os resultados em um dashboard interativo e visual.
 
-**Construído com as seguintes ferramentas e tecnologias:**
+## ✨ Principais Funcionalidades
 
-  * Python
-  * Ollama
-  * Docker
-  * GNU Bash
-  * Markdown
+  * **Análise de Sentimento:** Classifica o sentimento de textos usando um modelo de IA local (Ollama com Gemma:2b), garantindo privacidade e controle total sobre os dados.
+  * **Upload Flexível:** Suporte para upload de arquivos nos formatos **CSV** e **JSON**, permitindo fácil integração com diferentes fontes de dados.
+  * **Dashboard Interativo:** Visualize os dados analisados com estatísticas claras, gráficos de distribuição de sentimentos e uma tabela detalhada dos feedbacks.
+  * **Filtragem Avançada:** Filtre os resultados por sessão de análise, sentimento ou área/produto específico para obter insights mais granulares.
+  * **Exportação de Dados:** Exporte os dados filtrados do dashboard para **CSV** ou **JSON** com um único clique.
+  * **Exportação de Gráficos:** Salve o gráfico de distribuição de sentimentos como uma imagem PNG, com informações de contexto da análise.
+  * **Ambiente Containerizado:** Toda a aplicação é executada em contêineres Docker, simplificando a configuração e a implantação.
 
------
+## 🚀 Tecnologias Utilizadas
 
-### **Sumário**
+  * **Backend:** Django
+  * **Frontend:** HTML, CSS, JavaScript, Bootstrap 5
+  * **Banco de Dados:** PostgreSQL
+  * **Análise de IA:** Ollama (rodando o modelo Gemma:2b)
+  * **Containerização:** Docker e Docker Compose
+  * **Visualização de Dados:** Chart.js
 
-  * [Visão Geral](https://www.google.com/search?q=%23vis%C3%A3o-geral)
-  * [Por que sent.IA?](https://www.google.com/search?q=%23por-que-sentia)
-  * [Começando](https://www.google.com/search?q=%23come%C3%A7ando)
-  * [Pré-requisitos](https://www.google.com/search?q=%23pr%C3%A9-requisitos)
-  * [Instalação](https://www.google.com/search?q=%23instala%C3%A7%C3%A3o)
-  * [Uso](https://www.google.com/search?q=%23uso)
-  * [Testes](https://www.google.com/search?q=%23testes)
+## ⚙️ Como Executar o Projeto Localmente
 
------
+### Pré-requisitos
 
-### **Visão Geral**
+  * [Docker](https://www.docker.com/get-started)
+  * [Docker Compose](https://docs.docker.com/compose/install/)
 
-sent.IA é uma plataforma de código aberto criada para agilizar a análise de feedback de clientes, utilizando uma arquitetura escalável e em contêineres baseada em Django. A plataforma integra análise de sentimento por meio de Inteligência Artificial.
-
-### **Por que sent.IA?**
-
-Este projeto capacita desenvolvedores a implantar e gerenciar rapidamente fluxos de trabalho de análise de sentimento. As principais características incluem:
-
-  * **Configuração e Gerenciamento:** Utiliza `manage.py` e Docker Compose para configuração simplificada, migrações e orquestração do ambiente.
-  * **Implantação em Contêineres:** Garante ambientes consistentes entre desenvolvimento e produção com Docker, Dockerfile e scripts de entrypoint.
-  * **Integração com IA:** Aproveita a API do Ollama para classificação precisa de sentimentos, aprimorando os insights do feedback.
-  * **Dashboards Interativos:** Fornece templates amigáveis para visualizar dados de sentimento e gerenciar sessões.
-  * **Suporte Robusto ao Desenvolvimento:** Inclui frameworks de teste e interfaces de administração para um desenvolvimento confiável e escalável.
-
-### **Começando**
-
-#### **Pré-requisitos**
-
-Este projeto requer as seguintes dependências:
-
-  * **Linguagem de Programação:** Python
-  * **Gerenciador de Pacotes:** Pip
-  * **Runtime de Contêiner:** Docker
-
-#### **Instalação**
-
-Construa o sent.IA a partir do código-fonte e instale as dependências:
+### Passos para Instalação
 
 1.  **Clone o repositório:**
 
     ```bash
-    git clone https://github.com/AntonioRogerr/sent.IA
-    ```
-
-2.  **Navegue até o diretório do projeto:**
-
-    ```bash
+    git clone https://github.com/seu-usuario/sent.IA.git
     cd sent.IA
     ```
 
-3.  **Instale as dependências:**
+2.  **Construa e inicie os contêineres:**
+    O comando a seguir irá construir a imagem da aplicação Django, baixar as imagens do PostgreSQL e do Ollama, e iniciar todos os serviços.
 
     ```bash
-    pip install -r requirements.txt
+    docker compose up --build
     ```
 
-### **Uso**
+3.  **Acesse a aplicação:**
+    Após a inicialização, a aplicação estará disponível no seu navegador em: `http://localhost:8000`
 
-Execute o projeto com:
+4.  **Baixando o modelo de IA (Primeira Vez):**
+    Para que a análise funcione, o Ollama precisa baixar o modelo `gemma:2b`. Abra um novo terminal e execute o seguinte comando:
 
-**Usando Docker:**
+    ```bash
+    docker exec -it sent.ia-ollama-1 ollama pull gemma:2b
+    ```
 
-```bash
-docker run -it {nome_da_imagem}
-```
+    Aguarde o download ser concluído. A aplicação agora está pronta para uso\!
 
-**Usando Pip:**
+## 📋 Como Usar
 
-```bash
-python {entrypoint}
-```
+1.  **Acesse a Página Principal:** Navegue para a página inicial (`/`).
+2.  **Faça o Upload:** Arraste e solte ou clique para selecionar um arquivo `.csv` ou `.json` contendo os feedbacks que deseja analisar.
+3.  **Estrutura do Arquivo:** Certifique-se de que seu arquivo contenha as colunas/chaves necessárias. Você pode baixar modelos de exemplo diretamente na página de upload.
+      * **Obrigatória:** Uma coluna/chave com o texto do feedback (nomes aceitos: `feedback_text`, `Feedback`, `texto_feedback`, `comentario`).
+      * **Opcionais:** `customer_name`, `feedback_date`, `product_area`.
+4.  **Análise:** Clique em "Enviar e Analisar". A aplicação processará o arquivo e o redirecionará para o dashboard.
+5.  **Explore o Dashboard:**
+      * Visualize as estatísticas gerais e o gráfico de sentimentos.
+      * Use os filtros para detalhar a análise por sessão, sentimento ou produto.
+      * Exporte os dados filtrados ou o gráfico para seus relatórios.
 
-### **Testes**
+*Dashboard com filtros, estatísticas e gráfico de sentimentos.*
 
-O Sent.ia usa o framework de testes `{test_framework}`. Execute a suíte de testes com:
+-----
 
-**Usando Docker:**
-
-```bash
-echo 'INSIRA-O-COMANDO-DE-TESTE-AQUI'
-```
-
-**Usando Pip:**
-
-```bash
-pytest
-```
+*Este projeto foi criado como uma ferramenta para demonstrar a integração de análise de sentimento com IA em uma aplicação web moderna.*
