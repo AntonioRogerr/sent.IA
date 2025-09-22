@@ -1,16 +1,16 @@
 # sent.IA
 
-> [cite\_start]Transforme Feedback em Ação com Insights Inteligentes [cite: 47]
+> Transforme Feedback em Ação com Insights Inteligentes
 
-[cite\_start]**sent.IA** é uma plataforma de código aberto projetada para otimizar a análise de feedback de clientes por meio de uma arquitetura escalável e conteinerizada construída em Django. [cite: 64] [cite\_start]Ele integra classificação de sentimento alimentada por IA. [cite: 65]
+**sent.IA** é uma plataforma de código aberto projetada para otimizar a análise de feedback de clientes por meio de uma arquitetura escalável e conteinerizada construída em Django. Ele integra classificação de sentimento alimentada por IA.
 
 **Construído com as seguintes ferramentas e tecnologias:**
 
-  * [cite\_start]Python [cite: 54]
-  * [cite\_start]Ollama [cite: 51]
-  * [cite\_start]Docker [cite: 53]
-  * [cite\_start]GNU Bash [cite: 53]
-  * [cite\_start]Markdown [cite: 50]
+  * Python
+  * Ollama
+  * Docker
+  * GNU Bash
+  * Markdown
 
 -----
 
@@ -28,45 +28,45 @@
 
 ### **Visão Geral**
 
-[cite\_start]O sent.IA é uma plataforma de código aberto criada para agilizar a análise de feedback de clientes, utilizando uma arquitetura escalável e em contêineres baseada em Django. [cite: 64] [cite\_start]A plataforma integra análise de sentimento por meio de Inteligência Artificial. [cite: 65]
+sent.IA é uma plataforma de código aberto criada para agilizar a análise de feedback de clientes, utilizando uma arquitetura escalável e em contêineres baseada em Django. A plataforma integra análise de sentimento por meio de Inteligência Artificial.
 
 ### **Por que sent.IA?**
 
-[cite\_start]Este projeto capacita desenvolvedores a implantar e gerenciar rapidamente fluxos de trabalho de análise de sentimento. [cite: 72] As principais características incluem:
+Este projeto capacita desenvolvedores a implantar e gerenciar rapidamente fluxos de trabalho de análise de sentimento. As principais características incluem:
 
-  * [cite\_start]**Configuração e Gerenciamento:** Utiliza `manage.py` e Docker Compose para configuração simplificada, migrações e orquestração do ambiente. [cite: 74, 75]
-  * [cite\_start]**Implantação em Contêineres:** Garante ambientes consistentes entre desenvolvimento e produção com Docker, Dockerfile e scripts de entrypoint. [cite: 76]
-  * [cite\_start]**Integração com IA:** Aproveita a API do Ollama para classificação precisa de sentimentos, aprimorando os insights do feedback. [cite: 77]
-  * [cite\_start]**Dashboards Interativos:** Fornece templates amigáveis para visualizar dados de sentimento e gerenciar sessões. [cite: 78]
-  * [cite\_start]**Suporte Robusto ao Desenvolvimento:** Inclui frameworks de teste e interfaces de administração para um desenvolvimento confiável e escalável. [cite: 79]
+  * **Configuração e Gerenciamento:** Utiliza `manage.py` e Docker Compose para configuração simplificada, migrações e orquestração do ambiente.
+  * **Implantação em Contêineres:** Garante ambientes consistentes entre desenvolvimento e produção com Docker, Dockerfile e scripts de entrypoint.
+  * **Integração com IA:** Aproveita a API do Ollama para classificação precisa de sentimentos, aprimorando os insights do feedback.
+  * **Dashboards Interativos:** Fornece templates amigáveis para visualizar dados de sentimento e gerenciar sessões.
+  * **Suporte Robusto ao Desenvolvimento:** Inclui frameworks de teste e interfaces de administração para um desenvolvimento confiável e escalável.
 
 ### **Começando**
 
 #### **Pré-requisitos**
 
-[cite\_start]Este projeto requer as seguintes dependências: [cite: 82]
+Este projeto requer as seguintes dependências:
 
-  * [cite\_start]**Linguagem de Programação:** Python [cite: 83]
-  * [cite\_start]**Gerenciador de Pacotes:** Pip [cite: 84]
-  * [cite\_start]**Runtime de Contêiner:** Docker [cite: 85]
+  * **Linguagem de Programação:** Python
+  * **Gerenciador de Pacotes:** Pip
+  * **Runtime de Contêiner:** Docker
 
 #### **Instalação**
 
-[cite\_start]Construa o sent.IA a partir do código-fonte e instale as dependências: [cite: 87]
+Construa o sent.IA a partir do código-fonte e instale as dependências:
 
-1.  [cite\_start]**Clone o repositório:** [cite: 88]
+1.  **Clone o repositório:**
 
     ```bash
     git clone https://github.com/AntonioRogerr/sent.IA
     ```
 
-2.  [cite\_start]**Navegue até o diretório do projeto:** [cite: 90]
+2.  **Navegue até o diretório do projeto:**
 
     ```bash
     cd sent.IA
     ```
 
-3.  [cite\_start]**Instale as dependências:** [cite: 92]
+3.  **Instale as dependências:**
 
     ```bash
     pip install -r requirements.txt
@@ -74,15 +74,15 @@
 
 ### **Uso**
 
-[cite\_start]Execute o projeto com: [cite: 100]
+Execute o projeto com:
 
-[cite\_start]**Usando Docker:** [cite: 101]
+**Usando Docker:**
 
 ```bash
 docker run -it {nome_da_imagem}
 ```
 
-[cite\_start]**Usando Pip:** [cite: 103]
+**Usando Pip:**
 
 ```bash
 python {entrypoint}
@@ -90,15 +90,15 @@ python {entrypoint}
 
 ### **Testes**
 
-[cite\_start]O Sent.ia usa o framework de testes `{test_framework}`. [cite: 107] [cite\_start]Execute a suíte de testes com: [cite: 107]
+O Sent.ia usa o framework de testes `{test_framework}`. Execute a suíte de testes com:
 
-[cite\_start]**Usando Docker:** [cite: 108]
+**Usando Docker:**
 
 ```bash
 echo 'INSIRA-O-COMANDO-DE-TESTE-AQUI'
 ```
 
-[cite\_start]**Usando Pip:** [cite: 110]
+**Usando Pip:**
 
 ```bash
 pytest
